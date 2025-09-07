@@ -16,7 +16,7 @@ Validated Oppizi’s geolocation using the Open Charge Map (OCM) API.
 **Checks performed**
 - Response time < 1000 ms
 - Status code 200
-- Partial JSON Schema validation (Ajv in Cypress, JSON Schema tests in Postman)
+- Partial JSON Schema validation
 - Business rules:
   - /referencedata: Countries include BR; ConnectionTypes non-empty with valid IDs and titles.
   - /poi: Results length <= maxresults; filtered by country; if Distance is present, it is within the requested radius (+0.5 km).
