@@ -1,0 +1,217 @@
+{
+  "info": {
+    "name": "Open Charge Map API Tests",
+    "_postman_id": "f3a1b1af-5c35-4a1c-9a2f-ocm-tests",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "API tests for Open Charge Map: GET /referencedata and GET /poi"
+  },
+  "item": [
+    {
+      "name": "GET /referencedata/",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/referencedata/?key={{OCM_API_KEY}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "referencedata",
+            ""
+          ],
+          "query": [
+            {
+              "key": "key",
+              "value": "{{OCM_API_KEY}}"
+            }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "// Basic checks",
+              "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
+              "pm.test('Response time < 1000ms', function () { pm.expect(pm.response.responseTime).to.be.below(1000); });",
+              "",
+              "// Schema (partial)",
+              "const schema = {",
+              "  type: 'object',",
+              "  required: ['Countries','ConnectionTypes','DataProviders','StatusTypes'],",
+              "  properties: {",
+              "    Countries: { type: 'array', items: { type: 'object', required: ['Title','ISOCode','ID'], properties: { Title:{type:'string'}, ISOCode:{type:'string'}, ID:{type:'number'} } } },",
+              "    ConnectionTypes: { type:'array', items: { type:'object', required:['ID','Title'], properties: { ID:{type:'number'}, Title:{type:'string'} } } },",
+              "    DataProviders: { type:'array' },",
+              "    StatusTypes: { type:'array' }",
+              "  }",
+              "};",
+              "pm.test('Schema matches (partial)', function () {",
+              "  pm.response.to.have.jsonSchema(schema);",
+              "});",
+              "",
+              "// Business rules",
+              "const data = pm.response.json();",
+              "pm.test('Has countries and includes Brazil (BR/BRA)', function () {",
+              "  pm.expect(data.Countries).to.be.an('array').that.is.not.empty;",
+              "  const hasBR = data.Countries.some(c => (c.ISOCode||'').toUpperCase() === 'BR' || (c.ISOCode||'').toUpperCase() === 'BRA');",
+              "  pm.expect(hasBR).to.be.true;",
+              "});",
+              "pm.test('ConnectionTypes non-empty and have titles', function(){",
+              "  pm.expect(data.ConnectionTypes).to.be.an('array').that.is.not.empty;",
+              "  data.ConnectionTypes.forEach(ct => {",
+              "    pm.expect(ct).to.have.property('Title');",
+              "  });",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "GET /poi/ (S\u00e3o Paulo, BR)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/poi/?key={{OCM_API_KEY}}&latitude={{latitude}}&longitude={{longitude}}&distance={{distance}}&countrycode={{countrycode}}&maxresults={{maxresults}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "poi",
+            ""
+          ],
+          "query": [
+            {
+              "key": "key",
+              "value": "{{OCM_API_KEY}}"
+            },
+            {
+              "key": "latitude",
+              "value": "{{latitude}}"
+            },
+            {
+              "key": "longitude",
+              "value": "{{longitude}}"
+            },
+            {
+              "key": "distance",
+              "value": "{{distance}}"
+            },
+            {
+              "key": "countrycode",
+              "value": "{{countrycode}}"
+            },
+            {
+              "key": "maxresults",
+              "value": "{{maxresults}}"
+            }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "// Basic checks",
+              "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
+              "pm.test('Response time < 1000ms', function () { pm.expect(pm.response.responseTime).to.be.below(1000); });",
+              "",
+              "// Schema (partial)",
+              "const schema = {",
+              "  type: 'array',",
+              "  items: {",
+              "    type: 'object',",
+              "    required: ['ID','AddressInfo'],",
+              "    properties: {",
+              "      ID: { type:'number' },",
+              "      AddressInfo: {",
+              "        type:'object',",
+              "        required: ['Title','Latitude','Longitude','Country'],",
+              "        properties: {",
+              "          Title: { type:'string' },",
+              "          Latitude: { type:'number' },",
+              "          Longitude: { type:'number' },",
+              "          Country: { type:'object', properties: { ISOCode: { type:'string' } } }",
+              "        }",
+              "      },",
+              "      Distance: { type:['number','null'] },",
+              "      Connections: { type:['array','null'] }",
+              "    }",
+              "  }",
+              "};",
+              "pm.test('Schema matches (partial)', function () {",
+              "  pm.response.to.have.jsonSchema(schema);",
+              "});",
+              "",
+              "// Business rules",
+              "const arr = pm.response.json();",
+              "const distance = Number(pm.variables.get('distance'));",
+              "const maxresults = Number(pm.variables.get('maxresults'));",
+              "",
+              "pm.test('Array length <= maxresults', function(){",
+              "  pm.expect(arr.length).to.be.at.most(maxresults);",
+              "});",
+              "",
+              "pm.test('Country ISOCode is BR/BRA and within distance (if provided)', function(){",
+              "  arr.forEach(poi => {",
+              "    pm.expect(poi).to.have.property('AddressInfo');",
+              "    const iso = (((poi||{}).AddressInfo||{}).Country||{}).ISOCode || '';",
+              "    if (iso) {",
+              "      pm.expect(iso.toUpperCase()).to.match(/^BR(A)?$/);",
+              "    }",
+              "    if (typeof poi.Distance === 'number') {",
+              "      pm.expect(poi.Distance).to.be.below(distance + 0.5);",
+              "    }",
+              "  });",
+              "});"
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "https://api.openchargemap.io/v3",
+      "type": "string"
+    },
+    {
+      "key": "OCM_API_KEY",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "latitude",
+      "value": "-23.5505",
+      "type": "string"
+    },
+    {
+      "key": "longitude",
+      "value": "-46.6333",
+      "type": "string"
+    },
+    {
+      "key": "distance",
+      "value": "10",
+      "type": "string"
+    },
+    {
+      "key": "countrycode",
+      "value": "BR",
+      "type": "string"
+    },
+    {
+      "key": "maxresults",
+      "value": "5",
+      "type": "string"
+    }
+  ]
+}
