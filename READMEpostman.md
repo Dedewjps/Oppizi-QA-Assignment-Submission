@@ -19,7 +19,7 @@ Each request includes tests for:
 (You can find the key by inspecting the X-Api-Key header or ?key= query in network requests from https://map.openchargemap.io/#/search)
 
 ## 2) Run via Postman 
-- Choose the collection, select the **OCM Local** environment, and click **Run**.
+- Choose the collection, choose the desired request, and click **Run**.
 
 ## Notes
 - Response time assertions (< 1000 ms) depend on your network. If they are flaky, consider loosening to 1500 ms for local runs.
