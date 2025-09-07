@@ -3,7 +3,7 @@
 This repository contains my complete solution for the Oppizi technical test, delivered in three parts.
 
 ## Part 1 – System Journeys & Architecture
-- Produced an sequence diagram.
+- Produced an sequence diagram for both journeys.
 - Focus areas: clear data flow, integration points, and reusable services.
 
 ## Part 2 – API Testing (Open Charge Map API)
